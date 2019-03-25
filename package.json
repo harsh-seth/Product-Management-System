@@ -1,0 +1,20 @@
+{
+  "name": "product-management-system",
+  "version": "1.0.0",
+  "description": "A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc. It is developed with Swagger and Node. More details to follow soon",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harsh-seth/Product-Management-System.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/harsh-seth/Product-Management-System/issues"
+  },
+  "homepage": "https://github.com/harsh-seth/Product-Management-System#readme"
+}
