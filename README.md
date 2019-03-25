@@ -1,0 +1,1 @@
+A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc. It is developed with Swagger and Node. More details to follow soon  
