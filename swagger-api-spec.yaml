@@ -1,0 +1,78 @@
+swagger: '2.0'
+info:
+  description: A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc.
+  version: 0.0.1
+  title: Product Management System
+  contact:
+    email: harshseth2006@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: 'localhost:3000'
+basePath: /
+tags:
+  - name: Demo
+    description: Demo APIs
+schemes:
+  - http
+produces:
+  - "application/json"
+paths:
+  /hello:
+    get:
+      tags: 
+        - Demo
+      summary: Say Hello
+      description: Accepts a name and says hello
+      operationId: hello
+      parameters:
+        - 
+          in: query
+          name: name
+          required: true
+          description: Name to greet
+          type: string
+      responses: 
+        '200':
+          description: Successful
+          schema:
+            $ref: "#/definitions/messageResponse"
+    post: 
+      tags:
+        - Demo
+      summary: Say Hello with Body
+      description: Accepts a name in as key value pairs (either JSON or form data) and says hello
+      operationId: helloBody
+      consumes:
+        - application/json
+      parameters:
+        -
+          in: body
+          name: body
+          required: true
+          description: Object with name
+          schema:
+              $ref: "#/definitions/nameData"
+      responses:
+        '200':
+          description: Successful
+          schema: 
+            $ref: "#/definitions/messageResponse"
+
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: api_key
+    in: header
+    
+definitions:
+  nameData:
+    type: object
+    properties:
+      name:
+        type: string
+  messageResponse:
+    type: object
+    properties:
+      message:
+        type: string
