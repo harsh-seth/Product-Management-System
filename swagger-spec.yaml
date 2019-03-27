@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc.
-  version: 0.0.1
+  version: 0.0.3
   title: Product Management System
   contact:
     email: harshseth2006@gmail.com
@@ -26,7 +26,7 @@ schemes:
 produces:
   - "application/json"
 paths:
-  '/':
+  /:
     get:
       tags:
         - Misc
@@ -43,13 +43,13 @@ paths:
                 type: array
                 items:
                   type: string
-  '/swagger':
+  /swagger:
     get:
       tags:
         - Misc
       summary: Get a copy of this swagger spec sheet
       description: Download a copy of this spec sheet to load it in a viewer for your development convenience
-      operationId: GetSwagger
+      operationId: GetSwaggerSpecs
       produces: 
         - text/yaml
       responses:
@@ -57,7 +57,104 @@ paths:
           description: Returns .yaml Swagger spec sheet
           schema:
             type: file
-  '/*':
+  /category:
+    post:
+      tags:
+        - Category Details
+      summary: Add a new category
+      description: Add a new category of products to database
+      operationId: CreateCategory
+      parameters:
+        - name: body
+          in: body
+          description: Details of the new category
+          required: true
+          schema:
+            $ref: '#/definitions/Category'
+            required:
+              - categoryID
+              - name
+      responses:
+        '200':
+          description: Category was added successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: An error while creating new category
+          schema:
+            $ref: '#/definitions/MessageResponse'
+    put:
+      tags:
+        - Category Details
+      summary: Update an existing category
+      description: Request body must contain the category ID and the details to be updated. To remove parent from a category, set parentCategoryID to -1
+      operationId: UpdateCategory
+      parameters:
+        - name: body
+          in: body
+          description: Details of the category to be updated
+          required: true
+          schema:
+            $ref: '#/definitions/Category'
+            required:
+              - categoryID
+      responses:
+        '200':
+          description: Category was updated successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such category exists with the provided category ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: An error occured with updating the category
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /category/{categoryID}:
+    get:
+      tags:
+        - Category Details
+      summary: Get the details of a category
+      description: Fetch all the details of a category
+      operationId: GetCategory
+      parameters:
+        - name: categoryID
+          in: path
+          description: Unique ID of the requested category
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: Returns a JSON object with details of a category
+          schema:
+            $ref: '#/definitions/Category'
+        '404':
+          description: Category ID requested does not exist
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: A valid category ID was not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+    delete:
+      tags:
+        - Category Details
+      summary: Delete an existing category
+      description: Remove a category, all subcategories of the category and the products associated to them
+      operationId: DeleteCategory
+      parameters:
+      - name: categoryID
+        in: path
+        description: Unique ID of the category to be deleted
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Successfully deleted the category and all of its children
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /*:
     get:
       tags: 
         - Misc
@@ -79,8 +176,7 @@ paths:
         '404':
           description: Resource not found
           schema: 
-            $ref: "#/definitions/MessageResponse"
-            
+            $ref: "#/definitions/MessageResponse"         
 definitions:
   Product:
     type: object
@@ -93,7 +189,7 @@ definitions:
         description: Name of the Product
         type: string
         example: "Ballpoint Pen"
-      categoryId:
+      categoryID:
         description: ID of the category product belongs to
         type: integer
         example: 2
@@ -123,8 +219,8 @@ definitions:
         type: number
         example: 42
         minimum: 0
-      taxCategoryId:
-        description: Tax Category Id number for GST calculation
+      taxCategoryID:
+        description: Tax Category ID number for GST calculation
         type: integer
         example: 1
       imageURLs:
@@ -147,15 +243,17 @@ definitions:
   Category:
     type: object
     properties:
+      categoryID:
+        description: Unique Identifier for the Category
+        type: integer
+        example: 1
       name:
         description: Name of the Category
         type: string
         example: "Writing Tools"
-      childrenCategoryIds:
-        description: An array of category Ids of all it's sub-categories
-        type: array
-        items: 
-          type: integer
+      parentCategoryID:
+        description: Category ID of its parent category. Leave blank for no parent
+        type: integer
   MessageResponse:
     type: object
     properties:
