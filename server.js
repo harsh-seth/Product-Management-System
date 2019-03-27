@@ -16,7 +16,7 @@ const validators = {
         'parentCategoryID': joi.number().integer().min(-1).default(null)
     },
     'productCreate': {
-        'productSKU': joi.number().integer().min(0).required(),
+        'productSKU': joi.string().length(8).required(),
         'name': joi.string().required(),
         'categoryID': joi.number().integer().min(0).required(),
         'keywords': joi.array().items(joi.string()).default([]),
@@ -30,13 +30,13 @@ const validators = {
         'status': joi.string().valid(['live', 'draft']).default('draft')
     },
     'productUpdate': {
-        'productSKU': joi.number().integer().min(0).required(),
+        'productSKU': joi.string().length(8).required(),
         'name': joi.string().default(null),
         'categoryID': joi.number().integer().min(0).default(null),
         'keywords': joi.array().items(joi.string()).default([]),
         'brand': joi.string().default(null),
         'color': joi.string().default(null),
-        'modeOfSale': joi.string().valid(['online', 'offline', 'both']).default(null),
+        'modeOfSale': joi.string().valid(['online', 'offline', 'both']).default('offline'),
         'basePrice': joi.number().min(0).default(null),
         'taxCategoryID': joi.number().integer().min(0).default(null),
         'imageURLs': joi.array().items(joi.string()).default([]),
@@ -50,7 +50,7 @@ const messages = {
     'invalidParameters': "Some parameters passed with the request are missing or invalid!",
     'invalidCatID': "No category exists with that ID!",
     'invalidParentCatID': "No parent category exists with that ID!",
-    'invalidProdID': "No product exists with that ID!",
+    'invalidProdSKU': "No product exists with that ID!",
     'invalidTaxCategoryID': "No tax category with that ID exists!",
     'duplicateID': "An item with that ID already exists!",
     'opOK': 'The operation was successful!',
@@ -59,7 +59,13 @@ const messages = {
 const listOfEndpoints = [
     '/', '/swagger',
     '/category', '/category/{categoryID}',
-    '/product', '/product/{productSKU}'
+    '/product', '/product/{productSKU}',
+    '/category/{categoryID}/getSubCategories', '/category/{categoryID}/getProducts',
+    '/product/{productSKU}/getSimiliar', '/catalog/filterByKeyword/{keyword}',
+    '/catalog/filterByKeyword', '/catalog/filterByBrand/{brand}', 
+    '/catalog/filterByBrand', '/catalog/filterByColor/{color}',
+    '/catalog/filterByColor', '/catalog/filterByMode/{mode}', 
+    '/catalog/filterByStatus/{status}'
 ]
 
 var taxBrackets = {
@@ -91,8 +97,8 @@ var categories = {
 }
 
 var products = {
-    1: {
-        productSKU: 1,
+    'abc123d4': {
+        productSKU: 'abc123d4',
         name: "Ballpoint Pen",
         categoryID: 2,
         keywords: ['pen', 'writing'],
@@ -105,19 +111,19 @@ var products = {
         stock: 2000,
         status: 'live'
     },
-    2: {
-        productSKU: 2,
+    'cba3214d': {
+        productSKU: 'cba3214d',
         name: "Eraser",
         categoryID: 1,
         keywords: ['rubber'],
-        brand: 'Qazwer Corp.',
+        brand: 'Guin Inc.',
         color: 'white',
         modeOfSale: 'offline',
         basePrice: 1,
         taxCategoryID: 0,
-        imageURLs: [],
+        imageURLs: ['/pathToImageHosting/img1.jpg'],
         stock: 500,
-        status: 'live'
+        status: 'draft'
     }
 }
 
@@ -360,8 +366,8 @@ app.get('/product/:productSKU', (req, res) => {
         } else {
             // Send resource not found
             res.status(404).send({
-                'message': messages['invalidProdID'],
-                'status': 'invalidProdID'
+                'message': messages['invalidProdSKU'],
+                'status': 'invalidProdSKU'
             })
         }
     } else {
@@ -475,8 +481,8 @@ app.put('/product', (req, res) => {
         } else {
             // If product with product ID doesn't exist
             res.status(404).send({
-                'message': messages['invalidProdID'],
-                'status': 'invalidProdID'
+                'message': messages['invalidProdSKU'],
+                'status': 'invalidProdSKU'
             })
             
         }
@@ -498,10 +504,306 @@ app.delete('/product/:productSKU', (req, res) => {
         } else {
             // Send resource not found
             res.status(404).send({
-                'message': messages['invalidProdID'],
-                'status': 'invalidProdID'
+                'message': messages['invalidProdSKU'],
+                'status': 'invalidProdSKU'
             })
         }
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/category/:categoryID/getSubCategories', (req, res) => {
+    // Get a list of subcategories
+    var categoryID = req.params.categoryID
+    if (categoryID) {
+        // If valid parameters were passed
+        if (categoryID in categories) {
+            // If category exists send details
+            getChildren(categoryID)
+            .then((subcategories) => {
+                var subcategoriesDetails = []
+                for(var i=0; i<subcategories.length; i++) {
+                    subcategoriesDetails.push(categories[subcategories[i]])
+                }
+                res.send({
+                    'subCategories': subcategoriesDetails
+                })
+            })
+        } else {
+            // Send resource not found
+            res.status(404).send({
+                'message': messages['invalidCatID'],
+                'status': 'invalidCatID'
+            })
+        }
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/category/:categoryID/getProducts', (req, res) => {
+    // Get products in a category
+    var categoryID = req.params.categoryID
+    if (categoryID) {
+        // If valid parameters were passed
+        if (categoryID in categories) {
+            // If category exists send details
+            var productDetails = []
+            for(var productSKU in products) {
+                if (products[productSKU]['categoryID'] == categoryID) {
+                    productDetails.push(products[productSKU])
+                }
+            }
+
+            res.send({
+                'products': productDetails
+            })
+        } else {
+            // Send resource not found
+            res.status(404).send({
+                'message': messages['invalidCatID'],
+                'status': 'invalidCatID'
+            })
+        }
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/product/:productSKU/getSimilar', (req, res) => {
+    // Get similar products
+    var query_productSKU = req.params.productSKU
+    if (query_productSKU && query_productSKU.length == 8) {
+        // If valid parameters were passed
+        if (query_productSKU in products) {
+            var productDetails = []
+            for (var productSKU in products) {
+                for (var key in products[productSKU]) {
+                    if (products[productSKU][key] === products[query_productSKU][key]) {
+                        productDetails.push(products[productSKU])
+                        break
+                    }
+                }
+            }
+            
+            res.send({
+                'products': productDetails
+            })
+        } else {
+            // Send resource not found
+            res.status(404).send({
+                'message': messages['invalidProdSKU'],
+                'status': 'invalidProdSKU'
+            })
+        }     
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/catalog/filterByKeyword/:keyword', (req, res) => {
+    // Get products by keyword
+    var query = req.params.keyword
+    if (query) {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (products[productSKU]['keywords'].indexOf(query) != -1) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.post('/catalog/filterByKeyword', (req, res) => {
+    // Get products by a list of keywords
+    var keywords = req.body.keywords
+    if (keywords) {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            for(var i=0; i<keywords.length; i++) {
+                if (products[productSKU]['keywords'].indexOf(keywords[i]) != -1) {
+                    productDetails.push(products[productSKU])
+                    break
+                }
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/catalog/filterByBrand/:brand', (req, res) => {
+    // Get products by brand
+    var query = req.params.brand
+    if (query) {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (products[productSKU]['brand'] === query) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.post('/catalog/filterByBrand', (req, res) => {
+    // Get products by a list of brands
+    var brands = req.body.brands
+    if (brands) {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (brands.indexOf(products[productSKU]['brand']) != -1) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/catalog/filterByColor/:color', (req, res) => {
+    // Get products by color
+    var query = req.params.color
+    if (query) {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (products[productSKU]['color'] === (query.toLowerCase())) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.post('/catalog/filterByColor', (req, res) => {
+    // Get products by a list of colors
+    var colors = req.body.colors
+    if (colors) {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (colors.indexOf(products[productSKU]['color']) != -1) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/catalog/filterByMode/:mode', (req, res) => {
+    // Get products by mode
+    var query = req.params.mode
+    if (query === "offline" || query === "online" || query === "both") {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (products[productSKU]['modeOfSale'] === query) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/catalog/filterByStatus/:status', (req, res) => {
+    // Get products by status
+    var query = req.params.status
+    if (query === "live" || query === "draft") {
+        // If valid parameters were passed        
+        var productDetails = []
+        for(var productSKU in products) {
+            if (products[productSKU]['status'] === query) {
+                productDetails.push(products[productSKU])
+            }
+        }
+
+        res.send({
+            'products': productDetails
+        })
     } else {
         // Send invalid parameters
         res.status(400).send({

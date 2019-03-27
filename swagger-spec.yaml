@@ -16,9 +16,9 @@ tags:
   - name: Product Details
     description: Add, Modify and Remove Products
   - name: Search
-    description: Search the catalog for products via relevant queries 
+    description: Search the catalog for categories and products via relevant queries 
   - name: Utils
-    description: Helper endpoints which reveal or modify the state of the system
+    description: Get, set, calculate and more operations
   - name: Misc
     description: Endpoints with no functional significance, but lots of semantic significance
 schemes:
@@ -135,7 +135,7 @@ paths:
     delete:
       tags:
         - Category Details
-      summary: Delete an existing category
+      summary: Delete an existing category and all its subcategories
       description: Remove a category, all subcategories of the category and the products associated to them
       operationId: DeleteCategory
       parameters:
@@ -214,7 +214,7 @@ paths:
           in: path
           description: Unique ID of the requested product
           required: true
-          type: integer
+          type: string
       responses:
         '200':
           description: Returns a JSON object with details of a product
@@ -235,11 +235,11 @@ paths:
       description: Delete an existing product
       operationId: DeleteProduct
       parameters:
-      - name: productSKU
-        in: path
-        description: Unique ID of the product to be deleted
-        required: true
-        type: integer
+        - name: productSKU
+          in: path
+          description: Unique ID of the product to be deleted
+          required: true
+          type: string
       responses:
         '200':
           description: Successfully deleted the product and all of its children
@@ -247,6 +247,339 @@ paths:
             $ref: '#/definitions/MessageResponse'
         '404':
           description: No such product exists with the provided product ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /category/{categoryID}/getSubCategories:
+    get:
+      tags:
+        - Search
+      summary: Get sub categories of a category
+      description: Get a list of all immediate child categories for a given category
+      operationId: GetSubCategories
+      parameters:
+        - name: categoryID
+          in: path
+          description: Category ID of the parent category
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: Returns a list of all subcategories
+          schema:
+            type: object
+            properties:
+              subCategories:
+                type: array
+                items: 
+                  $ref: '#/definitions/Category'
+        '404':
+          description: No such category exists with the provided category ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: A valid category ID was not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /category/{categoryID}/getProducts:
+    get:
+      tags:
+        - Search
+      summary: Get all products in a category
+      description: Get a list of all products associated with a category
+      operationId: GetProductsInCategory
+      parameters:
+        - name: categoryID
+          in: path
+          description: Category ID of the required category
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: Returns a list of all products in the category
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '404':
+          description: No such category exists with the provided category ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: A valid category ID was not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /product/{productSKU}/getSimilar:
+    get:
+      tags:
+        - Search
+      summary: Get similar products
+      description: Get a list of all products similar to the specified product
+      operationId: GetSimilarProducts
+      parameters:
+        - name: productSKU
+          in: path
+          description: SKU of the query product
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Returns a list of all similar products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '404':
+          description: No such product exists with the provided product SKU
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: A valid product SKU was not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByKeyword/{keyword}:
+    get:
+      tags:
+        - Search
+      summary: Get products which match a keyword
+      description: Get a list of all products which contain the query in their keywords
+      operationId: GetProductsByKeyword
+      parameters:
+        - name: keyword
+          in: path
+          description: Keyword to look for in products
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByKeyword:
+    post:
+      tags:
+        - Search
+      summary: Get products matching a list of keywords
+      description: Get a list of all products which contain the queries in their keywords
+      operationId: GetProductsByKeywords
+      parameters:
+        - in: body
+          name: body
+          description: Request body
+          required: true
+          schema:
+            type: object
+            properties:
+              keywords:
+                type: array
+                items: 
+                  type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByBrand/{brand}:
+    get:
+      tags:
+        - Search
+      summary: Get products belonging to a brand
+      description: Get a list of all products which belong to a brand
+      operationId: GetProductsByBrand
+      parameters:
+        - name: brand
+          in: path
+          description: Brand to look for
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByBrand:
+    post:
+      tags:
+        - Search
+      summary: Get products from a list of brands
+      description: Get a list of all products which belong to any brand in a list of brands
+      operationId: GetProductsByBrands
+      parameters:
+        - in: body
+          name: body
+          description: Request body
+          required: true
+          schema:
+            type: object
+            properties:
+              brands:
+                type: array
+                items: 
+                  type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByColor/{color}:
+    get:
+      tags:
+        - Search
+      summary: Get products of a particular color
+      description: Get a list of all products which is described to be of the specified color
+      operationId: GetProductsByColor
+      parameters:
+        - name: color
+          in: path
+          description: Color of the product
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByColor:
+    post:
+      tags:
+        - Search
+      summary: Get products of a color from a list of colors
+      description: Get a list of all products which has a color from a list of colors
+      operationId: GetProductsByColors
+      parameters:
+        - in: body
+          name: body
+          description: Request body
+          schema:
+            type: object
+            properties:
+              colors:
+                type: array
+                items: 
+                  type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByMode/{mode}:
+    get:
+      tags:
+        - Search
+      summary: Get products sold in a particular mode
+      description: Get a list of all products sold in the mode specified
+      operationId: GetProductsByMode
+      parameters:
+        - name: mode
+          in: path
+          description: The mode of sales to filter by
+          required: true
+          enum:
+            - online
+            - offline
+            - both
+          type: string
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /catalog/filterByStatus/{status}:
+    get:
+      tags:
+        - Search
+      summary: Get products by status
+      description: Get a list of all products in the queried status
+      operationId: GetProductsByStatus
+      parameters:
+        - name: status
+          in: path
+          description: Product status
+          required: true
+          type: string
+          enum:
+            - live
+            - draft
+      responses:
+        '200':
+          description: Returns a list of matching products
+          schema:
+            type: object
+            properties:
+              products:
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
   /*:
@@ -278,8 +611,8 @@ definitions:
     properties:
       productSKU:
         description: Unique Identifier for the Product
-        type: integer
-        example: 1
+        type: string
+        example: 23ab34c3
       name:
         description: Name of the Product
         type: string
