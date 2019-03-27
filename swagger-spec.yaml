@@ -120,9 +120,9 @@ definitions:
           - both
       basePrice:
         description: Base selling price of the item
-        type: float
+        type: number
         example: 42
-        min: 0
+        minimum: 0
       taxCategoryId:
         description: Tax Category Id number for GST calculation
         type: integer
@@ -136,7 +136,7 @@ definitions:
         description: The current number of items available in stock
         type: integer
         example: 200
-        min: 0
+        minimum: 0
       status:
         description: Current status of the product (if available for purchasing)
         type: string
