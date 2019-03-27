@@ -1,0 +1,165 @@
+swagger: '2.0'
+info:
+  description: A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc.
+  version: 0.0.1
+  title: Product Management System
+  contact:
+    email: harshseth2006@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: 'localhost:3000'
+basePath: /
+tags:
+  - name: Category Details
+    description: Add, Modify and Remove Categories
+  - name: Product Details
+    description: Add, Modify and Remove Products
+  - name: Search
+    description: Search the catalog for products via relevant queries 
+  - name: Utils
+    description: Helper endpoints which reveal or modify the state of the system
+  - name: Misc
+    description: Endpoints with no functional significance, but lots of semantic significance
+schemes:
+  - http
+produces:
+  - "application/json"
+paths:
+  '/':
+    get:
+      tags:
+        - Misc
+      summary: Get a list of valid endpoints
+      description: An aid to fetch a list of all accessible endpoints
+      operationId: GetEndPointList
+      responses:
+        '200': 
+          description: List of all endpoints
+          schema:
+            type: object
+            properties:
+              listOfEndpoints:
+                type: array
+                items:
+                  type: string
+  '/swagger':
+    get:
+      tags:
+        - Misc
+      summary: Get a copy of this swagger spec sheet
+      description: Download a copy of this spec sheet to load it in a viewer for your development convenience
+      operationId: GetSwagger
+      produces: 
+        - text/yaml
+      responses:
+        '200':
+          description: Returns .yaml Swagger spec sheet
+          schema:
+            type: file
+  '/*':
+    get:
+      tags: 
+        - Misc
+      summary: Any invalid URL
+      description: Any URL which doesn't match the above paths will be handled by this
+      operationId: GetInvalidURL
+      responses: 
+        '404':
+          description: Resource not found
+          schema:
+            $ref: "#/definitions/MessageResponse"
+    post: 
+      tags:
+        - Misc
+      summary: Any invalid URL
+      description: Any URL which doesn't match the above paths will be handled by this
+      operationId: PostInvalidURL
+      responses:
+        '404':
+          description: Resource not found
+          schema: 
+            $ref: "#/definitions/MessageResponse"
+            
+definitions:
+  Product:
+    type: object
+    properties:
+      productSKU:
+        description: Unique Identifier for the Product
+        type: integer
+        example: 1
+      name:
+        description: Name of the Product
+        type: string
+        example: "Ballpoint Pen"
+      categoryId:
+        description: ID of the category product belongs to
+        type: integer
+        example: 2
+      keywords:
+        description: An array of keywords to facilitate searching 
+        type: array
+        items: 
+          type: string
+      brand:
+        description: Name of the brand
+        type: string
+        example: "Qazwer Corp."
+      color:
+        description: Color of the item
+        type: string
+        example: "red"
+      modeOfSale:
+        description: Mode of the sales
+        type: string
+        example: online
+        enum:
+          - online
+          - offline
+          - both
+      basePrice:
+        description: Base selling price of the item
+        type: float
+        example: 42
+        min: 0
+      taxCategoryId:
+        description: Tax Category Id number for GST calculation
+        type: integer
+        example: 1
+      imageURLs:
+        description: An array of URLs where the images of the product are hosted
+        type: array
+        items:
+          type: string
+      stock:
+        description: The current number of items available in stock
+        type: integer
+        example: 200
+        min: 0
+      status:
+        description: Current status of the product (if available for purchasing)
+        type: string
+        example: live
+        enum:
+          - live
+          - draft
+  Category:
+    type: object
+    properties:
+      name:
+        description: Name of the Category
+        type: string
+        example: "Writing Tools"
+      childrenCategoryIds:
+        description: An array of category Ids of all it's sub-categories
+        type: array
+        items: 
+          type: integer
+  MessageResponse:
+    type: object
+    properties:
+      status:
+        type: string
+      message:
+        type: string
