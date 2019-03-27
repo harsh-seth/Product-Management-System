@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc.
-  version: 0.0.3
+  version: 0.0.4
   title: Product Management System
   contact:
     email: harshseth2006@gmail.com
@@ -71,9 +71,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Category'
-            required:
-              - categoryID
-              - name
       responses:
         '200':
           description: Category was added successfully
@@ -96,8 +93,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Category'
-            required:
-              - categoryID
       responses:
         '200':
           description: Category was updated successfully
@@ -130,7 +125,7 @@ paths:
           schema:
             $ref: '#/definitions/Category'
         '404':
-          description: Category ID requested does not exist
+          description: No such category exists with the provided category ID
           schema:
             $ref: '#/definitions/MessageResponse'
         '400':
@@ -152,6 +147,106 @@ paths:
       responses:
         '200':
           description: Successfully deleted the category and all of its children
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such category exists with the provided category ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /product:
+    post:
+      tags:
+        - Product Details
+      summary: Add a new product
+      description: Add a new product to database
+      operationId: CreateProduct
+      parameters:
+        - name: body
+          in: body
+          description: Details of the new product
+          required: true
+          schema:
+            $ref: '#/definitions/Product'
+      responses:
+        '200':
+          description: Product was added successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: An error while creating new product
+          schema:
+            $ref: '#/definitions/MessageResponse'
+    put:
+      tags:
+        - Product Details
+      summary: Update an existing product
+      description: Request body must contain the product ID and the details to be updated
+      operationId: UpdateProduct
+      parameters:
+        - name: body
+          in: body
+          description: Details of the product to be updated
+          required: true
+          schema:
+            $ref: '#/definitions/Product'
+      responses:
+        '200':
+          description: Product was updated successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such product exists with the provided product ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: An error occured with updating the product
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /product/{productSKU}:
+    get:
+      tags:
+        - Product Details
+      summary: Get the details of a product
+      description: Fetch all the details of a product
+      operationId: GetProduct
+      parameters:
+        - name: productSKU
+          in: path
+          description: Unique ID of the requested product
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: Returns a JSON object with details of a product
+          schema:
+            $ref: '#/definitions/Product'
+        '404':
+          description: Product ID requested does not exist
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: A valid product ID was not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+    delete:
+      tags:
+        - Product Details
+      summary: Delete an existing product
+      description: Delete an existing product
+      operationId: DeleteProduct
+      parameters:
+      - name: productSKU
+        in: path
+        description: Unique ID of the product to be deleted
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Successfully deleted the product and all of its children
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such product exists with the provided product ID
           schema:
             $ref: '#/definitions/MessageResponse'
   /*:

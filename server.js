@@ -11,10 +11,38 @@ const portNum = 3000
 
 const validators = {
     'category': {
-        'categoryID': joi.number().min(0).required(),
+        'categoryID': joi.number().integer().min(0).required(),
         'name': joi.string().default(null),
-        'parentCategoryID': joi.number().min(-1).default(null)
-    } 
+        'parentCategoryID': joi.number().integer().min(-1).default(null)
+    },
+    'productCreate': {
+        'productSKU': joi.number().integer().min(0).required(),
+        'name': joi.string().required(),
+        'categoryID': joi.number().integer().min(0).required(),
+        'keywords': joi.array().items(joi.string()).default([]),
+        'brand': joi.string().required(),
+        'color': joi.string().default(null),
+        'modeOfSale': joi.string().valid(['online', 'offline', 'both']).required(),
+        'basePrice': joi.number().min(0).required(),
+        'taxCategoryID': joi.number().integer().min(0).required(),
+        'imageURLs': joi.array().items(joi.string()).default([]),
+        'stock': joi.number().integer().default(0),
+        'status': joi.string().valid(['live', 'draft']).default('draft')
+    },
+    'productUpdate': {
+        'productSKU': joi.number().integer().min(0).required(),
+        'name': joi.string().default(null),
+        'categoryID': joi.number().integer().min(0).default(null),
+        'keywords': joi.array().items(joi.string()).default([]),
+        'brand': joi.string().default(null),
+        'color': joi.string().default(null),
+        'modeOfSale': joi.string().valid(['online', 'offline', 'both']).default(null),
+        'basePrice': joi.number().min(0).default(null),
+        'taxCategoryID': joi.number().integer().min(0).default(null),
+        'imageURLs': joi.array().items(joi.string()).default([]),
+        'stock': joi.number().integer().default(0),
+        'status': joi.string().valid(['live', 'draft']).default('draft')
+    }
 }
 
 const messages = {
@@ -23,13 +51,15 @@ const messages = {
     'invalidCatID': "No category exists with that ID!",
     'invalidParentCatID': "No parent category exists with that ID!",
     'invalidProdID': "No product exists with that ID!",
+    'invalidTaxCategoryID': "No tax category with that ID exists!",
     'duplicateID': "An item with that ID already exists!",
     'opOK': 'The operation was successful!',
 }
 
 const listOfEndpoints = [
     '/', '/swagger',
-    '/category', '/category/{id}'
+    '/category', '/category/{categoryID}',
+    '/product', '/product/{productSKU}'
 ]
 
 var taxBrackets = {
@@ -275,7 +305,7 @@ app.put('/category', (req, res) => {
 })
 
 app.delete('/category/:categoryID', (req, res) => {
-    // Get the details of a category
+    // delete a category, all sub categories and their associated products
     var categoryID = req.params.categoryID
     if (categoryID) {
         // If valid parameters were passed
@@ -308,6 +338,168 @@ app.delete('/category/:categoryID', (req, res) => {
             res.status(404).send({
                 'message': messages['invalidCatID'],
                 'status': 'invalidCatID'
+            })
+        }
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.get('/product/:productSKU', (req, res) => {
+    // Get the details of a product
+    var productSKU = req.params.productSKU
+    if (productSKU) {
+        // If valid parameters were passed
+        if (productSKU in products) {
+            // If product exists send details
+            res.send(products[productSKU])
+        } else {
+            // Send resource not found
+            res.status(404).send({
+                'message': messages['invalidProdID'],
+                'status': 'invalidProdID'
+            })
+        }
+    } else {
+        // Send invalid parameters
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.post('/product', (req, res) => {
+    // Add a new product
+    // Validate input provided 
+    const result = joi.validate(req.body, validators['productCreate'])
+    
+    if (result.error) {
+        // If validation fails
+        res.status(400).send({
+            'message': result.error.details[0].message,
+            'status': 'invalidParameters'
+        })
+    } else {
+        if (result.value.productSKU in products) {
+            // If product exists with that SKU
+            res.status(400).send({
+                'message': messages['duplicateID'],
+                'status': 'duplicateID'
+            })
+        } else if (!(result.value.categoryID in categories)) {
+            // If category ID provided does not exist
+            res.status(400).send({
+                'message': messages['invalidCatID'],
+                'status': 'invalidCatID'
+            })
+        } else if (!(result.value.taxCategoryID in taxBrackets)) {
+            // If tax category ID provided doesn't exist
+            res.status(400).send({
+                'message': messages['invalidTaxCategoryID'],
+                'status': 'invalidTaxCategoryID'
+            })
+        } else {
+            // Everything checks out, add the product
+            products[result.value.productSKU] = {
+                'productSKU': result.value.productSKU,
+                'name': result.value.name,
+                'categoryID': result.value.categoryID,
+                'keywords': result.value.keywords,
+                'brand': result.value.brand,
+                'color': result.value.color,
+                'modeOfSale': result.value.modeOfSale,
+                'basePrice': result.value.basePrice,
+                'taxCategoryID': result.value.taxCategoryID,
+                'imageURLs': result.value.imageURLs,
+                'stock': result.value.stock,
+                'status': result.value.status
+            }
+
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        }
+    }
+})
+
+app.put('/product', (req, res) => {
+    // Update a product
+    // Validate input provided 
+    const result = joi.validate(req.body, validators['productUpdate'])
+    
+    if (result.error) {
+        // If validation fails
+        res.status(400).send({
+            'message': result.error.details[0].message,
+            'status': 'invalidParameters'
+        })
+    } else {
+        if (result.value.productSKU in products) {
+            // If the product exists
+            if (result.value.categoryID != null) {
+                // If a category ID was provided
+                if (!(result.value.categoryID in categories)) {
+                    // If category ID provided does not exist
+                    return res.status(400).send({
+                        'message': messages['invalidCatID'],
+                        'status': 'invalidCatID'
+                    })
+                }
+            }
+            if (result.value.taxCategoryID != null) {
+                // If a tax category ID was provided
+                if (!(result.value.taxCategoryID in taxBrackets)) {
+                    // If tax category ID provided does not exist
+                    return res.status(400).send({
+                        'message': messages['invalidTaxCategoryID'],
+                        'status': 'invalidTaxCategoryID'
+                    })
+                }
+            }
+            // Everything checks out, update the category
+            for(var key in req.body) {
+                // Change the passed fields
+                products[req.body.productSKU][key] = req.body[key]
+            }
+ 
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        } else {
+            // If product with product ID doesn't exist
+            res.status(404).send({
+                'message': messages['invalidProdID'],
+                'status': 'invalidProdID'
+            })
+            
+        }
+    }
+})
+
+app.delete('/product/:productSKU', (req, res) => {
+    // Delete a product
+    var productSKU = req.params.productSKU
+    if (productSKU) {
+        // If valid parameters were passed
+        if (productSKU in products) {
+            // If product exists, delete product          
+            delete products[productSKU]
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        } else {
+            // Send resource not found
+            res.status(404).send({
+                'message': messages['invalidProdID'],
+                'status': 'invalidProdID'
             })
         }
     } else {
