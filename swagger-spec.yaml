@@ -212,7 +212,7 @@ paths:
       parameters:
         - name: productSKU
           in: path
-          description: Unique ID of the requested product
+          description: SKU of the requested product
           required: true
           type: string
       responses:
@@ -221,7 +221,7 @@ paths:
           schema:
             $ref: '#/definitions/Product'
         '404':
-          description: Product ID requested does not exist
+          description: Product SKU requested does not exist
           schema:
             $ref: '#/definitions/MessageResponse'
         '400':
@@ -582,6 +582,144 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+  /utils/taxRates:
+    get:
+      tags:
+        - Utils
+      summary: Get the current implemented tax rates
+      description: Get a dictionary of tax category IDs and their corresponding tax rate
+      operationId: GetTaxRates
+      responses:
+        '200':
+          description: Returns the currently implemented tax categories and corresponding rates
+          schema:
+            type: object
+            additionalProperties:
+              type: number
+    put:
+      tags:
+        - Utils
+      summary: Change currently implemented tax rates
+      description: Change the implemented tax rates by passing an object with key as tax category ID and value as new rate
+      operationId: SetTaxRates
+      parameters:
+        - name: body
+          in: body
+          description: New tax rates
+          required: true
+          schema:
+            type: object
+            additionalProperties:
+              type: number
+      responses:
+        '200':
+          description: Tax rates were updated successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /utils/discounts:
+    get:
+      tags:
+        - Utils
+      summary: Get all active discounts on products
+      description: Gets a dictionary of all discount rates on all products
+      operationId: GetDiscounts
+      responses:
+        '200':
+          description: Returns a dictionary of SKU values and discount rates
+          schema:
+            type: object
+            additionalProperties:
+              type: number
+    put:
+      tags:
+        - Utils
+      summary: Add or change a discount on a product
+      description: Adds or changes a discount on a product referenced via its SKU
+      operationId: AddDiscount
+      parameters:
+        - name: body
+          in: body
+          description: New Discount
+          required: true
+          schema:
+            type: object
+            properties:
+              productSKU:
+                type: string
+              discountRate:
+                type: number
+      responses:
+        '200':
+          description: Discount was added successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404': 
+          description: No such product exists with the provided product SKU
+          schema:
+              $ref: '#/definitions/MessageResponse' 
+  /utils/discounts/{productSKU}:
+    delete:
+      tags:
+        - Utils
+      summary: Remove discount from a product
+      description: Remove any discount on a product, referenced by its SKU
+      operationId: DeleteDiscount
+      parameters:
+        - name: productSKU
+          in: path
+          description: SKU of the product to remove discount from
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Discount was added successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such product exists with the provided product SKU
+          schema:
+            $ref: '#/definitions/MessageResponse'
+  /utils/calculateFinalPrice:
+    post:
+      tags:
+        - Utils
+      summary: Calculate final prices
+      description: Calculate the final prices of products, factoring in discounts and taxes. It accepts a list of product SKUs and gives a breakdown of the price calculation
+      operationId: CalculatePrices
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema: 
+            type: object
+            properties:
+              productSKUs:
+                type: array
+                items: 
+                  type: string
+      responses:
+        '200': 
+          description: Returns a dictionary of priceBreakdowns
+          schema:
+            type: object
+            additionalProperties:
+                $ref: '#/definitions/PriceBreakdown'
+        '400':
+          description: Valid parameters were not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
   /*:
     get:
       tags: 
@@ -682,6 +820,29 @@ definitions:
       parentCategoryID:
         description: Category ID of its parent category. Leave blank for no parent
         type: integer
+  PriceBreakdown:
+    type: object
+    properties:
+      basePrice:
+        description: Base price of the product
+        type: number
+        example: 10
+      discountRate:
+        description: Discount rate applied on the product
+        type: number
+        example: 0.2
+      taxableAmount:
+        description: Price of the product, after discount but before applying tax
+        type: number
+        example: 8
+      taxRate:
+        description: Tax rate applied on the product
+        type: number
+        example: 0.1
+      finalPrice:
+        description: Final price of the product
+        type: number
+        example: 8.8
   MessageResponse:
     type: object
     properties:

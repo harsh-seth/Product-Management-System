@@ -68,7 +68,7 @@ const listOfEndpoints = [
     '/catalog/filterByStatus/{status}'
 ]
 
-var taxBrackets = {
+var taxCategories = {
     0: 0,
     1: 0.02,
     2: 0.05,
@@ -128,30 +128,7 @@ var products = {
 }
 
 var discounts = {
-    'product': {
-        2: 0.1
-    },
-    'categories': {
-        1: 0.2
-    }
 }
-
-var orders = [
-    {
-        'status': 'placed',
-        'items': {
-
-            '2': 300,
-            '1': 50
-        }
-    },
-    {
-        'status': 'placed',
-        'items': {
-            '1': 150
-        }
-    }
-]
 
 const getChildren = async function(parentID) {
     var children = []
@@ -403,7 +380,7 @@ app.post('/product', (req, res) => {
                 'message': messages['invalidCatID'],
                 'status': 'invalidCatID'
             })
-        } else if (!(result.value.taxCategoryID in taxBrackets)) {
+        } else if (!(result.value.taxCategoryID in taxCategories)) {
             // If tax category ID provided doesn't exist
             res.status(400).send({
                 'message': messages['invalidTaxCategoryID'],
@@ -460,7 +437,7 @@ app.put('/product', (req, res) => {
             }
             if (result.value.taxCategoryID != null) {
                 // If a tax category ID was provided
-                if (!(result.value.taxCategoryID in taxBrackets)) {
+                if (!(result.value.taxCategoryID in taxCategories)) {
                     // If tax category ID provided does not exist
                     return res.status(400).send({
                         'message': messages['invalidTaxCategoryID'],
@@ -813,6 +790,116 @@ app.get('/catalog/filterByStatus/:status', (req, res) => {
     }
 })
 
+app.get('/utils/taxRates', (req, res) => {
+    res.send(taxCategories)
+})
+
+app.put('/utils/taxRates', (req, res) => {
+    for(var key in req.body) {
+        if (key in taxCategories) {
+            taxCategories[key] = req.body[key]
+        } else {
+            res.status(400).send({
+                'message': messages['invalidParameters'],
+                'status': 'invalidParameters'
+            })
+        }
+    }
+    res.send({
+        'message': messages['opOK'],
+        'status': 'opOK'
+    })
+})
+
+app.get('/utils/discounts', (req, res) => {
+    res.send(discounts)
+})
+
+app.put('/utils/discounts', (req, res) => {
+    var productSKU = req.body.productSKU
+    var discountRate = req.body.discountRate
+    if(productSKU && discountRate) {
+        if(productSKU in products) {
+            discounts[productSKU] = discountRate
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        } else {
+            res.status(404).send({
+                'message': messages['invalidProdSKU'],
+                'status': 'invalidProdSKU'
+            })
+        }
+    } else {
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.delete('/utils/discounts/:productSKU', (req, res) => {
+    var productSKU = req.params.productSKU
+    if(productSKU) {
+        if(productSKU in products) {
+            delete discounts[productSKU]
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        } else {
+            res.status(404).send({
+                'message': messages['invalidProdSKU'],
+                'status': 'invalidProdSKU'
+            })
+        }
+    } else {
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
+app.post('/utils/calculateFinalPrice', (req, res) => {
+    var productSKUs = req.body.productSKUs
+    if(productSKUs) {
+        var priceBreakdowns = {}
+        for(var i=0; i<productSKUs.length; i++) {
+            var productSKU = productSKUs[i]
+            if(productSKU in products) {
+                var basePrice = products[productSKU]['basePrice']
+                var discountRate = 0
+                if(productSKU in discounts) {
+                    discountRate = discounts[productSKU]
+                }
+                var taxableAmount = basePrice - (basePrice * discountRate)
+                var taxRate = taxCategories[products[productSKU]['taxCategoryID']]
+                var finalPrice = taxableAmount + (taxableAmount * taxRate)
+                priceBreakdowns[productSKU] = {
+                    'basePrice': basePrice,
+                    'discountRate': discountRate,
+                    'taxableAmount': taxableAmount,
+                    'taxRate': taxRate,
+                    'finalPrice': finalPrice
+                }
+            } else {
+                res.status(404).send({
+                    'message': messages['invalidProdSKU'] + "(" + productSKU + ")",
+                    'status': 'invalidProdSKU'
+                })
+            }
+        }
+        res.send(priceBreakdowns)
+    } else {
+        res.status(400).send({
+            'message': messages['invalidParameters'],
+            'status': 'invalidParameters'
+        })
+    }
+})
+
 app.get('*', (req, res) => {
     res.status(404).send({
         'message': messages['invalidURL'],
@@ -821,6 +908,20 @@ app.get('*', (req, res) => {
 })
 
 app.post('*', (req, res) => {
+    res.status(404).send({
+        'message': messages['invalidURL'],
+        'status': 'invalidURL'
+    })
+})
+
+app.put('*', (req, res) => {
+    res.status(404).send({
+        'message': messages['invalidURL'],
+        'status': 'invalidURL'
+    })
+})
+
+app.delete('*', (req, res) => {
     res.status(404).send({
         'message': messages['invalidURL'],
         'status': 'invalidURL'
