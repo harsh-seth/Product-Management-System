@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc.
-  version: 0.0.6
+  version: 0.0.8
   title: Product Management System
   contact:
     email: harshseth2006@gmail.com
@@ -10,6 +10,7 @@ info:
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 host: 'localhost:3000'
 basePath: /
+
 tags:
   - name: Category Details
     description: Add, Modify and Remove Categories
@@ -25,6 +26,7 @@ schemes:
   - http
 produces:
   - "application/json"
+
 paths:
   /:
     get:
@@ -43,6 +45,7 @@ paths:
                 type: array
                 items:
                   type: string
+
   /swagger:
     get:
       tags:
@@ -57,6 +60,7 @@ paths:
           description: Returns .yaml Swagger spec sheet
           schema:
             type: file
+
   /category:
     post:
       tags:
@@ -98,14 +102,15 @@ paths:
           description: Category was updated successfully
           schema:
             $ref: '#/definitions/MessageResponse'
-        '404':
-          description: No such category exists with the provided category ID
-          schema:
-            $ref: '#/definitions/MessageResponse'
         '400':
           description: An error occured with updating the category
           schema:
             $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such category exists with the provided category ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+
   /category/{categoryID}:
     get:
       tags:
@@ -124,12 +129,12 @@ paths:
           description: Returns a JSON object with details of a category
           schema:
             $ref: '#/definitions/Category'
-        '404':
-          description: No such category exists with the provided category ID
-          schema:
-            $ref: '#/definitions/MessageResponse'
         '400':
           description: A valid category ID was not sent along with the request
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such category exists with the provided category ID
           schema:
             $ref: '#/definitions/MessageResponse'
     delete:
@@ -185,6 +190,7 @@ paths:
           description: An error while creating new category
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /product:
     post:
       tags:
@@ -212,7 +218,7 @@ paths:
       tags:
         - Product Details
       summary: Update an existing product
-      description: Request body must contain the product ID and the details to be updated
+      description: Request body must contain the productSKU and the details to be updated
       operationId: UpdateProduct
       parameters:
         - name: body
@@ -226,14 +232,15 @@ paths:
           description: Product was updated successfully
           schema:
             $ref: '#/definitions/MessageResponse'
-        '404':
-          description: No such product exists with the provided product ID
-          schema:
-            $ref: '#/definitions/MessageResponse'
         '400':
           description: An error occured with updating the product
           schema:
             $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such product exists with the provided productSKU
+          schema:
+            $ref: '#/definitions/MessageResponse'
+
   /product/{productSKU}:
     get:
       tags:
@@ -252,12 +259,12 @@ paths:
           description: Returns a JSON object with details of a product
           schema:
             $ref: '#/definitions/Product'
-        '404':
-          description: Product SKU requested does not exist
+        '400':
+          description: A valid productSKU was not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
-        '400':
-          description: A valid product ID was not sent along with the request
+        '404':
+          description: No such product exists with the provided productSKU
           schema:
             $ref: '#/definitions/MessageResponse'
     delete:
@@ -269,7 +276,7 @@ paths:
       parameters:
         - name: productSKU
           in: path
-          description: Unique ID of the product to be deleted
+          description: productSKU of the product to be deleted
           required: true
           type: string
       responses:
@@ -278,7 +285,7 @@ paths:
           schema:
             $ref: '#/definitions/MessageResponse'
         '404':
-          description: No such product exists with the provided product ID
+          description: No such product exists with the provided productSKU
           schema:
             $ref: '#/definitions/MessageResponse'
     post:
@@ -367,6 +374,7 @@ paths:
           description: An error while creating new product
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /category/{categoryID}/getSubCategories:
     get:
       tags:
@@ -377,7 +385,7 @@ paths:
       parameters:
         - name: categoryID
           in: path
-          description: Category ID of the parent category
+          description: categoryID of the parent category
           required: true
           type: integer
       responses:
@@ -390,14 +398,15 @@ paths:
                 type: array
                 items: 
                   $ref: '#/definitions/Category'
-        '404':
-          description: No such category exists with the provided category ID
-          schema:
-            $ref: '#/definitions/MessageResponse'
         '400':
-          description: A valid category ID was not sent along with the request
+          description: A valid categoryID was not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such category exists with the provided categoryID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+
   /category/{categoryID}/getProducts:
     get:
       tags:
@@ -408,7 +417,7 @@ paths:
       parameters:
         - name: categoryID
           in: path
-          description: Category ID of the required category
+          description: categoryID of the required category
           required: true
           type: integer
       responses:
@@ -421,14 +430,15 @@ paths:
                 type: array
                 items: 
                   $ref: '#/definitions/Product'
-        '404':
-          description: No such category exists with the provided category ID
-          schema:
-            $ref: '#/definitions/MessageResponse'
         '400':
-          description: A valid category ID was not sent along with the request
+          description: A valid categoryID was not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such category exists with the provided categoryID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+
   /product/{productSKU}/getSimilar:
     get:
       tags:
@@ -452,14 +462,15 @@ paths:
                 type: array
                 items: 
                   $ref: '#/definitions/Product'
-        '404':
-          description: No such product exists with the provided product SKU
-          schema:
-            $ref: '#/definitions/MessageResponse'
         '400':
-          description: A valid product SKU was not sent along with the request
+          description: A valid productSKU was not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+        '404':
+          description: No such product exists with the provided productSKU
+          schema:
+            $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByKeyword/{keyword}:
     get:
       tags:
@@ -470,7 +481,7 @@ paths:
       parameters:
         - name: keyword
           in: path
-          description: Keyword to look for in products
+          description: Keyword to search for in products
           required: true
           type: string
       responses:
@@ -487,6 +498,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByKeyword:
     post:
       tags:
@@ -520,6 +532,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByBrand/{brand}:
     get:
       tags:
@@ -530,7 +543,7 @@ paths:
       parameters:
         - name: brand
           in: path
-          description: Brand to look for
+          description: Brand to search for in product metadata
           required: true
           type: string
       responses:
@@ -547,6 +560,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByBrand:
     post:
       tags:
@@ -580,6 +594,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByColor/{color}:
     get:
       tags:
@@ -607,6 +622,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByColor:
     post:
       tags:
@@ -639,6 +655,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByMode/{mode}:
     get:
       tags:
@@ -670,6 +687,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /catalog/filterByStatus/{status}:
     get:
       tags:
@@ -700,6 +718,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /utils/taxRates:
     get:
       tags:
@@ -738,6 +757,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /utils/discounts:
     get:
       tags:
@@ -747,7 +767,7 @@ paths:
       operationId: GetDiscounts
       responses:
         '200':
-          description: Returns a dictionary of SKU values and discount rates
+          description: Returns a dictionary of productSKU values and discount rates
           schema:
             type: object
             additionalProperties:
@@ -761,7 +781,7 @@ paths:
       parameters:
         - name: body
           in: body
-          description: New Discount
+          description: New discount rates
           required: true
           schema:
             type: object
@@ -780,9 +800,10 @@ paths:
           schema:
             $ref: '#/definitions/MessageResponse'
         '404': 
-          description: No such product exists with the provided product SKU
+          description: No such product exists with the provided productSKU
           schema:
               $ref: '#/definitions/MessageResponse' 
+
   /utils/discounts/{productSKU}:
     delete:
       tags:
@@ -793,7 +814,7 @@ paths:
       parameters:
         - name: productSKU
           in: path
-          description: SKU of the product to remove discount from
+          description: productSKU of the product to remove discount from
           required: true
           type: string
       responses:
@@ -806,15 +827,16 @@ paths:
           schema:
             $ref: '#/definitions/MessageResponse'
         '404':
-          description: No such product exists with the provided product SKU
+          description: No such product exists with the provided productSKU
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /utils/calculateFinalPrice:
     post:
       tags:
         - Utils
       summary: Calculate final prices
-      description: Calculate the final prices of products, factoring in discounts and taxes. It accepts a list of product SKUs and gives a breakdown of the price calculation
+      description: Calculate the final prices of products, factoring in discounts and taxes. It accepts a list of productSKUs and gives a breakdown of the price calculation
       operationId: CalculatePrices
       parameters:
         - name: body
@@ -838,6 +860,7 @@ paths:
           description: Valid parameters were not sent along with the request
           schema:
             $ref: '#/definitions/MessageResponse'
+
   /*:
     get:
       tags: 
@@ -860,7 +883,30 @@ paths:
         '404':
           description: Resource not found
           schema: 
-            $ref: "#/definitions/MessageResponse"         
+            $ref: "#/definitions/MessageResponse"  
+    put: 
+      tags:
+        - Misc
+      summary: Any invalid URL
+      description: Any URL which doesn't match the above paths will be handled by this
+      operationId: PutInvalidURL
+      responses:
+        '404':
+          description: Resource not found
+          schema: 
+            $ref: "#/definitions/MessageResponse"  
+    delete: 
+      tags:
+        - Misc
+      summary: Any invalid URL
+      description: Any URL which doesn't match the above paths will be handled by this
+      operationId: DeleteInvalidURL
+      responses:
+        '404':
+          description: Resource not found
+          schema: 
+            $ref: "#/definitions/MessageResponse"  
+
 definitions:
   Product:
     type: object
@@ -924,6 +970,7 @@ definitions:
         enum:
           - live
           - draft
+  
   Category:
     type: object
     properties:
@@ -938,6 +985,7 @@ definitions:
       parentCategoryID:
         description: Category ID of its parent category. Leave blank for no parent
         type: integer
+  
   PriceBreakdown:
     type: object
     properties:
@@ -961,6 +1009,7 @@ definitions:
         description: Final price of the product
         type: number
         example: 8.8
+  
   MessageResponse:
     type: object
     properties:

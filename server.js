@@ -65,7 +65,9 @@ const listOfEndpoints = [
     '/catalog/filterByKeyword', '/catalog/filterByBrand/{brand}', 
     '/catalog/filterByBrand', '/catalog/filterByColor/{color}',
     '/catalog/filterByColor', '/catalog/filterByMode/{mode}', 
-    '/catalog/filterByStatus/{status}'
+    '/catalog/filterByStatus/{status}', '/utils/taxRates',
+    '/utils/discounts', '/utils/discounts/{productSKU}',
+    '/utils/calculateFinalPrice'
 ]
 
 var taxCategories = {
@@ -350,6 +352,9 @@ app.delete('/category/:categoryID', (req, res) => {
                 for (var prodID in products) {
                     if (products[prodID]['categoryID'] in toDelete) {
                         delete products[prodID]
+                        if (prodID in discounts) {
+                            delete discounts[prodID]
+                        }
                     }
                 }
 
@@ -579,6 +584,11 @@ app.delete('/product/:productSKU', (req, res) => {
         if (productSKU in products) {
             // If product exists, delete product          
             delete products[productSKU]
+
+            if (productSKU in discounts) {
+                delete discounts[productSKU]
+            }
+
             res.send({
                 'message': messages['opOK'],
                 'status': 'opOK'
