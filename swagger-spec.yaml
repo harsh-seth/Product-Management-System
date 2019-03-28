@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: A API driven product management system to facilitate easy retrieval of relevant items, updation of product tags, price etc.
-  version: 0.0.4
+  version: 0.0.6
   title: Product Management System
   contact:
     email: harshseth2006@gmail.com
@@ -139,11 +139,11 @@ paths:
       description: Remove a category, all subcategories of the category and the products associated to them
       operationId: DeleteCategory
       parameters:
-      - name: categoryID
-        in: path
-        description: Unique ID of the category to be deleted
-        required: true
-        type: integer
+        - name: categoryID
+          in: path
+          description: Unique ID of the category to be deleted
+          required: true
+          type: integer
       responses:
         '200':
           description: Successfully deleted the category and all of its children
@@ -151,6 +151,38 @@ paths:
             $ref: '#/definitions/MessageResponse'
         '404':
           description: No such category exists with the provided category ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+    post:
+      tags: 
+        - Category Details
+      summary: Add a new category via a form
+      description: Add a new category to the database via a form
+      operationId: CreateCategoryForm
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: categoryID
+          in: path
+          description: Unique ID for the Category
+          required: true
+          type: integer
+        - name: name
+          in: formData
+          description: Name of the Category
+          required: true
+          type: string
+        - name: parentCategoryID
+          in: formData
+          description: Category ID of its parent category. Leave blank for no parent
+          type: integer
+      responses:
+        '200':
+          description: Category was added successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: An error while creating new category
           schema:
             $ref: '#/definitions/MessageResponse'
   /product:
@@ -247,6 +279,92 @@ paths:
             $ref: '#/definitions/MessageResponse'
         '404':
           description: No such product exists with the provided product ID
+          schema:
+            $ref: '#/definitions/MessageResponse'
+    post:
+      tags: 
+        - Product Details
+      summary: Add a new product via a form
+      description: Add a new product to the database via a form
+      operationId: CreateProductForm
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - name: productSKU
+          in: path
+          description: Unique ID for the Category
+          required: true
+          type: string
+        - name: name
+          in: formData
+          description: Name of the Product
+          required: true
+          type: string
+        - name: categoryID
+          in: formData
+          description: ID of the category product belongs to
+          required: true
+          type: integer
+        - name: keywords
+          in: formData
+          description: An array of keywords to facilitate searching 
+          type: array
+          items: 
+            type: string
+        - name: brand
+          in: formData
+          description: Name of the brand
+          required: true
+          type: string
+        - name: color
+          in: formData
+          description: Color of the item
+          type: string
+        - name: modeOfSale
+          in: formData
+          description: Mode of the sales
+          required: true
+          type: string
+          enum:
+            - online
+            - offline
+            - both
+        - name: basePrice
+          in: formData
+          description: Base selling price of the item
+          required: true
+          type: number
+          minimum: 0
+        - name: taxCategoryID
+          in: formData
+          description: Tax Category ID number for GST calculation
+          required: true
+          type: integer
+        - name: imageURLs
+          in: formData
+          description: An array of URLs where the images of the product are hosted
+          type: array
+          items:
+            type: string
+        - name: stock
+          in: formData
+          description: The current number of items available in stock
+          type: integer
+          minimum: 0
+        - name: status
+          in: formData
+          description: Current status of the product (if available for purchasing)
+          type: string
+          enum:
+            - live
+            - draft
+      responses:
+        '200':
+          description: Product was added successfully
+          schema:
+            $ref: '#/definitions/MessageResponse'
+        '400':
+          description: An error while creating new product
           schema:
             $ref: '#/definitions/MessageResponse'
   /category/{categoryID}/getSubCategories:

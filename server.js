@@ -235,6 +235,55 @@ app.post('/category', (req, res) => {
     }
 })
 
+app.post('/category/:categoryID', (req, res) => {
+    // Add new category via form
+    req.body.categoryID = req.params.categoryID
+    const result = joi.validate(req.body, validators['category'])
+
+    if (result.error) {
+        // If validation fails
+        res.status(400).send({
+            'message': result.error.details[0].message,
+            'status': 'invalidParameters'
+        })
+    } else {
+        if (result.value.name == null) {
+            res.status(400).send({
+                'message': messages['invalidParameters'],
+                'status': 'invalidParameters'
+            })
+        } else if (categoryID in categories) {
+            // If category exists with that ID
+            res.status(400).send({
+                'message': messages['duplicateID'],
+                'status': 'duplicateID'
+            })
+        } else {
+            if (result.value.parentCategoryID != null) {
+                // If a parent category ID was provided
+                if (!(result.value.parentCategoryID in categories)) {
+                    // If parent category ID provided does not exist
+                    return res.status(400).send({
+                        'message': messages['invalidParentCatID'],
+                        'status': 'invalidParentCatID'
+                    })
+                }
+            }
+            // Everything checks out, add the category
+            categories[result.value.categoryID] = {
+                'categoryID': categoryID,
+                'name': result.value.name,
+                'parentCategoryID': result.value.parentCategoryID
+            }
+
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        }
+    }
+})
+
 app.put('/category', (req, res) => {
     // Update a category
     // Validate input provided 
@@ -359,6 +408,62 @@ app.get('/product/:productSKU', (req, res) => {
 app.post('/product', (req, res) => {
     // Add a new product
     // Validate input provided 
+    const result = joi.validate(req.body, validators['productCreate'])
+    
+    if (result.error) {
+        // If validation fails
+        res.status(400).send({
+            'message': result.error.details[0].message,
+            'status': 'invalidParameters'
+        })
+    } else {
+        if (result.value.productSKU in products) {
+            // If product exists with that SKU
+            res.status(400).send({
+                'message': messages['duplicateID'],
+                'status': 'duplicateID'
+            })
+        } else if (!(result.value.categoryID in categories)) {
+            // If category ID provided does not exist
+            res.status(400).send({
+                'message': messages['invalidCatID'],
+                'status': 'invalidCatID'
+            })
+        } else if (!(result.value.taxCategoryID in taxCategories)) {
+            // If tax category ID provided doesn't exist
+            res.status(400).send({
+                'message': messages['invalidTaxCategoryID'],
+                'status': 'invalidTaxCategoryID'
+            })
+        } else {
+            // Everything checks out, add the product
+            products[result.value.productSKU] = {
+                'productSKU': result.value.productSKU,
+                'name': result.value.name,
+                'categoryID': result.value.categoryID,
+                'keywords': result.value.keywords,
+                'brand': result.value.brand,
+                'color': result.value.color,
+                'modeOfSale': result.value.modeOfSale,
+                'basePrice': result.value.basePrice,
+                'taxCategoryID': result.value.taxCategoryID,
+                'imageURLs': result.value.imageURLs,
+                'stock': result.value.stock,
+                'status': result.value.status
+            }
+
+            res.send({
+                'message': messages['opOK'],
+                'status': 'opOK'
+            })
+        }
+    }
+})
+
+app.post('/product/:productSKU', (req, res) => {
+    // Add a new product via form
+    // Validate input provided 
+    req.body.productSKU = req.params.productSKU
     const result = joi.validate(req.body, validators['productCreate'])
     
     if (result.error) {
